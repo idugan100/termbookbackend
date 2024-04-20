@@ -125,6 +125,7 @@ func (m *model) Init() tea.Cmd {
 type Response struct {
 	prompt string
 	output string
+	ctrlC bool
 }
 
 // Used for BubbleTea Wizard
@@ -147,7 +148,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.contentField.SetValue("")
 			return m, tea.Quit
 		case "ctrl+c":
-			content.output = "99876-BAD"
+			//content.output = "99876-BAD"
+			content.ctrlC = true
 			return m, tea.Quit
 		}
 	}
@@ -270,7 +272,7 @@ func main() {
 
 	for len(strings.Split(content, " ")) < 5 {
 		var prompt2 string
-		if content == "99876-BAD" {
+		if m.response.ctrlC {
 			prompt2 = "\033[31m" + "Nice try with CTRL+C, finish your entry!" + "\033[0m" + "\nPlease write a journal entry - it must be at least 50 words\n"
 		} else {
 			prompt2 = "\033[31m" + "NOT ENOUGH WORDS" + "\033[0m" + "\nPlease write a journal entry - it must be at least 50 words\n"
@@ -284,6 +286,7 @@ func main() {
 			fmt.Printf("Tea has failed :(\n)")
 		}
 		content = m2.response.output
+		m = m2
 	}
 
 	var entry Entry
