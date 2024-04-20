@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -9,6 +10,7 @@ import (
 func newEntry(w http.ResponseWriter, r *http.Request) {
 	var e Entry
 	err := json.NewDecoder(r.Body).Decode(&e)
+	fmt.Print(e.Time)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
