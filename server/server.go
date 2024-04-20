@@ -2,16 +2,20 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
 
 type Entry struct {
-	Content   string `json:"content"`
-	UserEmail string `json:"userEmail"`
-	Time      string `json:"time"`
+	Content   string    `json:"content"`
+	UserEmail string    `json:"userEmail"`
+	Time      time.Time `json:"time"`
 }
+
+var dbConnection *sql.DB
 
 func Connect(path string) (*sql.DB, error) {
 	conn, err := sql.Open("sqlite", ("file:" + path))
@@ -22,8 +26,24 @@ func Connect(path string) (*sql.DB, error) {
 }
 
 func newEntry(w http.ResponseWriter, r *http.Request) {
+	var e Entry
+	err := json.NewDecoder(r.Body).Decode(&e)
 
-	w.Write([]byte("hi create"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if e.Content == "" || e.UserEmail == "" || e.Time.IsZero() {
+		http.Error(w, "missing field", http.StatusBadRequest)
+		return
+	}
+	_, err = dbConnection.Exec("INSERT INTO Entries (userEmail, content, time) VALUES (?,?,?)", e.UserEmail, e.Content, e.Time)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
 }
 
 func getUserEntries(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +55,8 @@ func timeCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	dbConnection, err := Connect("./database.db")
+	var err error
+	dbConnection, err = Connect("./database.db")
 	if err != nil {
 		panic(err)
 	}

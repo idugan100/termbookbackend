@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -12,8 +13,8 @@ import (
 )
 
 type Entry struct {
-	Content   string `json:"content"`
-	UserEmail string `json:"userEmail"`
+	Content   string    `json:"content"`
+	UserEmail string    `json:"userEmail"`
 	Time      time.Time `json:"time"`
 }
 
@@ -53,7 +54,11 @@ func main() {
 	currentTime := time.Now()
 	fmt.Println("====================")
 
-	var entry Entry 
+	var entry Entry
 	entry.setEntry(content, email, currentTime)
-	fmt.Println(entry)
+	jsonString, err := json.Marshal(entry)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(jsonString))
 }
