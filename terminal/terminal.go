@@ -6,28 +6,98 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	//"os"
+	"os"
 	"os/exec"
 	//"os/signal"
 	"strings"
 	"time"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-type Styles struct{
-	BorderColor lipgloss.Color
-	InputField lipgloss.Style
+//Progress Bar constants
+const (
+	padding 	= 4
+	maxWidth 	= 80
+)
+
+var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#2563EB")).Render
+//#626262
+
+type tickMsg time.Time
+
+type progressModel struct {
+	progress progress.Model
 }
 
+//Might conflict???
+func (mp progressModel) Init() tea.Cmd {
+	return tickCmd()
+}
+
+func (mp progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	//case tea.KeyMsg:
+	//	return mp, tea.Quit
+
+	case tea.WindowSizeMsg:
+		mp.progress.Width = msg.Width - padding*2 - 4
+		if mp.progress.Width > maxWidth {
+			mp.progress.Width = maxWidth
+		}
+		return mp, nil
+
+	case tickMsg:
+		if mp.progress.Percent() == 1.0 {
+			return mp, tea.Quit
+		}
+
+		// Note that you can also use progress.Model.SetPercent to set the
+		// percentage value explicitly, too.
+		cmd := mp.progress.IncrPercent(1)
+		return mp, tea.Batch(tickCmd(), cmd)
+
+	// FrameMsg is sent when the progress bar wants to animate itself
+	case progress.FrameMsg:
+		progressModel, cmd := mp.progress.Update(msg)
+		mp.progress = progressModel.(progress.Model)
+		return mp, cmd
+
+	default:
+		return mp, nil
+	}
+}
+
+func (mp progressModel) View() string {
+	pad := strings.Repeat(" ", padding)
+	return "\n" +
+		pad + mp.progress.View() + "\n\n" +
+		pad + helpStyle("Press any key to quit")
+}
+
+func tickCmd() tea.Cmd {
+	return tea.Tick(time.Second*1, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
+}
+
+//Used for BubbleTea Wizard
+type Styles struct{
+	BorderColor lipgloss.Color
+	BackColor lipgloss.Color
+	InputField lipgloss.Style
+}
+//Used for BubbleTea Wizard
 func DefaultStyles() *Styles {
 	s := new(Styles)
 	s.BorderColor = lipgloss.Color("#2563EB")
-	s.InputField = lipgloss.NewStyle().BorderForeground(s.BorderColor).BorderStyle(lipgloss.NormalBorder()).Padding(1).Width(80)
+	s.BackColor = lipgloss.Color(Red)
+	s.InputField = lipgloss.NewStyle().BorderForeground(s.BorderColor).BorderStyle(lipgloss.RoundedBorder()).Padding(1).Width(80)
 	return s
 }
-
+//Used for BubbleTea Wizard
 type model struct{
 	response Response
 	width int
@@ -35,7 +105,7 @@ type model struct{
 	contentField textinput.Model
 	styles *Styles
 }
-
+//Used for BubbleTea Wizard
 func New(response Response) *model {
 	styles := DefaultStyles()
 	contentField := textinput.New()
@@ -47,27 +117,20 @@ func New(response Response) *model {
 		styles: styles,
 	}
 }
-
+//Used for BubbleTea Wizard
 func (m *model) Init() tea.Cmd {
 	return textinput.Blink
 }
-
+//Used for BubbleTea Wizard
 type Response struct {
 	prompt string
 	output string
 }
-
+//Used for BubbleTea Wizard
 func NewResponse(prompt string) Response {
 	return Response{prompt: prompt}
 }
-/*
-func newTrueResponse(prompt string) {
-	response = NewResponse(prompt)
-	model := NewLongAnswerField()
-	response.input = model
-	return response
-}
-*/
+//One of the three major Bubble Tea functions, runs the update loop for the wizard
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	content := &m.response
@@ -89,7 +152,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.contentField, cmd = m.contentField.Update(msg)
 	return m, cmd
 }
-
+//This decides how the View port is structured for Bubble Tea
 func (m *model) View() string {
 	if m.width == 0 {
 		return "loading..."
@@ -107,6 +170,7 @@ func (m *model) View() string {
 	)
 }
 
+//Color Constants
 var Reset = "\033[0m"
 var Red = "\033[31m"
 var Green = "\033[32m"
@@ -117,12 +181,13 @@ var Cyan = "\033[36m"
 var Gray = "\033[37m"
 var White = "\033[97m"
 
+//Entry Struct, same in Server
 type Entry struct {
 	Content   string    `json:"content"`
 	UserEmail string    `json:"userEmail"`
 	Time      time.Time `json:"time"`
 }
-
+//Completed struct, keeps track if the user has already completed their journal entry for the day
 type Completed struct {
 	IsCompleted bool `json"isCompleted"`
 }
@@ -133,30 +198,12 @@ func (e *Entry) setEntry(content string, email string, time time.Time) {
 	e.Time = time
 }
 
-func startupMessage(currentTime time.Time) {
-	weekday := currentTime.Weekday()
-	month := currentTime.Month()
-	day := currentTime.Day()
-	year := currentTime.Year()
-	var style = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#FAFAFA")).
-		Background(lipgloss.Color("#22D3EE")).
-		Padding(4, 4, 4, 4).
-		Width(100).
-		Border(lipgloss.ThickBorder(), true, true).
-		BorderForeground(lipgloss.Color("#2563EB")).
-		BorderStyle(lipgloss.RoundedBorder())
-	output := fmt.Sprintf("Welcome to your daily terminal journal!\nToday is %s %s %d, %d\n", weekday, month, day, year)
-	fmt.Println(style.Render(output))
-}
-
 func timeString(currentTime time.Time) string {
 	weekday := currentTime.Weekday()
 	month := currentTime.Month()
 	day := currentTime.Day()
 	year := currentTime.Year()
-	retString := "Welcome to your daily terminal journal!\nToday is " + string(weekday) + " " +  string(month) + " " + day + ", " + year + "\n"
+	retString := fmt.Sprintf("Welcome to your daily terminal journal!\nToday is %s %s %d, %d \n", weekday, month, day, year)
 	return retString
 }
 
@@ -184,6 +231,15 @@ func main() {
 		return
 	}
 */
+	mp := progressModel{
+		progress: progress.New(progress.WithDefaultGradient()),
+	}
+
+	if _, err := tea.NewProgram(mp).Run(); err != nil {
+		fmt.Println("Progress Bar goofed", err)
+		os.Exit(1)
+	}
+
 	currentTime := time.Now()
 	prompt := timeString(currentTime)
 	//New Model pointer
@@ -230,7 +286,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(res.StatusCode)
+	//fmt.Println(res.StatusCode)
 	if res.StatusCode == 201{
 		fmt.Println("Sucessful Journal Upload!")
 	} else {
