@@ -1,30 +1,28 @@
 package main
 
 import (
-	//"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
-	//"os/signal"
 	"strings"
 	"time"
-	"github.com/charmbracelet/bubbles/textinput"
+
 	"github.com/charmbracelet/bubbles/progress"
-	"github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-//Progress Bar constants
+// Progress Bar constants
 const (
-	padding 	= 4
-	maxWidth 	= 80
+	padding  = 4
+	maxWidth = 80
 )
 
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#2563EB")).Render
-//#626262
 
 type tickMsg time.Time
 
@@ -32,15 +30,12 @@ type progressModel struct {
 	progress progress.Model
 }
 
-//Might conflict???
 func (mp progressModel) Init() tea.Cmd {
 	return tickCmd()
 }
 
 func (mp progressModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	//case tea.KeyMsg:
-	//	return mp, tea.Quit
 
 	case tea.WindowSizeMsg:
 		mp.progress.Width = msg.Width - padding*2 - 4
@@ -83,13 +78,14 @@ func tickCmd() tea.Cmd {
 	})
 }
 
-//Used for BubbleTea Wizard
-type Styles struct{
+// Used for BubbleTea Wizard
+type Styles struct {
 	BorderColor lipgloss.Color
-	BackColor lipgloss.Color
-	InputField lipgloss.Style
+	BackColor   lipgloss.Color
+	InputField  lipgloss.Style
 }
-//Used for BubbleTea Wizard
+
+// Used for BubbleTea Wizard
 func DefaultStyles() *Styles {
 	s := new(Styles)
 	s.BorderColor = lipgloss.Color("#22D3EE")
@@ -97,40 +93,46 @@ func DefaultStyles() *Styles {
 	s.InputField = lipgloss.NewStyle().BorderForeground(s.BorderColor).BorderStyle(lipgloss.DoubleBorder()).Padding(1).Width(80)
 	return s
 }
-//Used for BubbleTea Wizard
-type model struct{
-	response Response
-	width int
-	height int
+
+// Used for BubbleTea Wizard
+type model struct {
+	response     Response
+	width        int
+	height       int
 	contentField textinput.Model
-	styles *Styles
+	styles       *Styles
 }
-//Used for BubbleTea Wizard
+
+// Used for BubbleTea Wizard
 func New(response Response) *model {
 	styles := DefaultStyles()
 	contentField := textinput.New()
 	contentField.Placeholder = "Enter today's entry here!"
 	contentField.Focus()
 	return &model{
-		response: response,
+		response:     response,
 		contentField: contentField,
-		styles: styles,
+		styles:       styles,
 	}
 }
-//Used for BubbleTea Wizard
+
+// Used for BubbleTea Wizard
 func (m *model) Init() tea.Cmd {
 	return textinput.Blink
 }
-//Used for BubbleTea Wizard
+
+// Used for BubbleTea Wizard
 type Response struct {
 	prompt string
 	output string
 }
-//Used for BubbleTea Wizard
+
+// Used for BubbleTea Wizard
 func NewResponse(prompt string) Response {
 	return Response{prompt: prompt}
 }
-//One of the three major Bubble Tea functions, runs the update loop for the wizard
+
+// One of the three major Bubble Tea functions, runs the update loop for the wizard
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	content := &m.response
@@ -152,7 +154,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.contentField, cmd = m.contentField.Update(msg)
 	return m, cmd
 }
-//This decides how the View port is structured for Bubble Tea
+
+// This decides how the View port is structured for Bubble Tea
 func (m *model) View() string {
 	if m.width == 0 {
 		return "loading..."
@@ -163,14 +166,14 @@ func (m *model) View() string {
 		lipgloss.Center,
 		lipgloss.Center,
 		lipgloss.JoinVertical(
-			lipgloss.Center, 
+			lipgloss.Center,
 			m.response.prompt,
 			m.styles.InputField.Render(m.contentField.View()),
 		),
 	)
 }
 
-//Color Constants
+// Color Constants
 var Reset = "\033[0m"
 var Red = "\033[31m"
 var Green = "\033[32m"
@@ -181,13 +184,14 @@ var Cyan = "\033[36m"
 var Gray = "\033[37m"
 var White = "\033[97m"
 
-//Entry Struct, same in Server
+// Entry Struct, same in Server
 type Entry struct {
 	Content   string    `json:"content"`
 	UserEmail string    `json:"userEmail"`
 	Time      time.Time `json:"time"`
 }
-//Completed struct, keeps track if the user has already completed their journal entry for the day
+
+// Completed struct, keeps track if the user has already completed their journal entry for the day
 type Completed struct {
 	IsCompleted bool `json"isCompleted"`
 }
@@ -208,8 +212,6 @@ func timeString(currentTime time.Time) string {
 }
 
 func main() {
-	//Interupt to prevent people from escaping hahaha
-
 	//get github username
 	cmd := exec.Command("git", "config", "user.email")
 	var outBuffer bytes.Buffer
@@ -220,11 +222,11 @@ func main() {
 	}
 	email := outBuffer.String()
 	email = email[:len(email)-1]
-	
+
 	checkRes, err := http.Get("http://127.0.0.1:1234/timecheck/" + email)
 	var complete Completed
 	json.NewDecoder(checkRes.Body).Decode(&complete)
-	
+
 	var style = lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("#FAFAFA")).
@@ -235,7 +237,7 @@ func main() {
 		BorderForeground(lipgloss.Color("#2563EB")).
 		BorderStyle(lipgloss.RoundedBorder())
 	var output string
-	
+
 	if complete.IsCompleted {
 		output = fmt.Sprintf("You have already completed your journal for the day! Goodbye!\n")
 		fmt.Println(style.Render(output))
@@ -259,27 +261,27 @@ func main() {
 
 	//Creates new Bubble Tea Program
 	p := tea.NewProgram(m, tea.WithAltScreen())
-	if _, err := p.Run(); err != nil{
-		fmt.Printf("Tea has failed :(\n)")	
+	if _, err := p.Run(); err != nil {
+		fmt.Printf("Tea has failed :(\n)")
 	}
 
 	var content string
 	content = m.response.output
-	
+
 	for len(strings.Split(content, " ")) < 5 {
 		var prompt2 string
-		if content == "99876-BAD"{
+		if content == "99876-BAD" {
 			prompt2 = "\033[31m" + "Nice try with CTRL+C, finish your entry!" + "\033[0m" + "\nPlease write a journal entry - it must be at least 50 words\n"
 		} else {
 			prompt2 = "\033[31m" + "NOT ENOUGH WORDS" + "\033[0m" + "\nPlease write a journal entry - it must be at least 50 words\n"
 		}
-		
+
 		response2 := NewResponse(prompt2)
 		m2 := New(response2)
 		m2.contentField.SetValue(content)
 		p2 := tea.NewProgram(m2, tea.WithAltScreen())
-		if _, err := p2.Run(); err != nil{
-			fmt.Printf("Tea has failed :(\n)")	
+		if _, err := p2.Run(); err != nil {
+			fmt.Printf("Tea has failed :(\n)")
 		}
 		content = m2.response.output
 	}
@@ -295,9 +297,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//fmt.Println(res.StatusCode)
 
-	if res.StatusCode == 201{
+	if res.StatusCode == 201 {
 		output = fmt.Sprintf("Sucessful Journal Upload!\n")
 	} else {
 		output = fmt.Sprintf("Failed to save to Journal Database!\n")
