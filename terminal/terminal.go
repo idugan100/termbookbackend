@@ -276,7 +276,7 @@ func main() {
 		
 		response2 := NewResponse(prompt2)
 		m2 := New(response2)
-
+		m2.contentField.SetValue(content)
 		p2 := tea.NewProgram(m2, tea.WithAltScreen())
 		if _, err := p2.Run(); err != nil{
 			fmt.Printf("Tea has failed :(\n)")	
