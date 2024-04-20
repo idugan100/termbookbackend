@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"syscall"
 	"strings"
 	"time"
 )
@@ -48,34 +47,16 @@ func startupMessage(currentTime time.Time) {
 	day := currentTime.Day()
 	year := currentTime.Year()
 	fmt.Printf("%sWelcome to your daily terminal journal!\nToday is %s %s %d, %d%s\n", Green, weekday, month, day, year, Reset)
-	fmt.Println("Please Write a journal entry - it must be at least 50 words")
-}
-
-func handler(signal os.Signal) {
-	if signal == syscall.SIGTERM{
-		fmt.Printf("%sYOU CANNOT LEAVE UNTIL YOU WRITE YOUR ENTRY!%s", Red, Reset)
-	}
 }
 
 func main() {
 	//Interupt to prevent people from escaping hahaha
 	signal.Ignore(os.Interrupt)
-	
 
 	currentTime := time.Now()
 	//Message for start of the program
-	startupMessage(currentTime)
 	
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	var content string
-	content = scanner.Text()
-
-	for len(strings.Split(content, " ")) < 5{
-		fmt.Println("write a journal entry - it must be at least 50 words")
-		scanner.Scan()
-		content = scanner.Text()
-	}
+	startupMessage(currentTime)
 
 	//get github username
 	cmd := exec.Command("git", "config", "user.email")
@@ -87,6 +68,25 @@ func main() {
 	}
 	email := outBuffer.String()
 	email = email[:len(email)-1]
+
+	checkRes, err := http.Get("http://127.0.0.1:8080/timecheck/" + email)
+	var complete Completed
+	json.NewDecoder(checkRes.Body).Decode(&complete)
+	if complete.IsCompleted {
+		fmt.Printf("%sYou have already completed your journal for the day! Goodbye!%s\n", Green, Reset)
+		return
+	}
+	fmt.Println("Please Write a journal entry - it must be at least 50 words")
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	var content string
+	content = scanner.Text()
+
+	for len(strings.Split(content, " ")) < 5{
+		fmt.Printf("%sNOT ENOUGH WORDS%s\nPlease write a journal entry - it must be at least 50 words\n", Red, Reset)
+		scanner.Scan()
+		content = scanner.Text()
+	}
 
 	fmt.Println("====================")
 
