@@ -33,7 +33,7 @@ func main() {
 	mux.HandleFunc("GET /timecheck/{userEmail}", timeCheck)
 
 	s := http.Server{
-		Addr:    ":8080",
+		Addr:    ":1234",
 		Handler: mux,
 	}
 
