@@ -15,3 +15,11 @@
 	}
 ] 
 ```
+
+# TermBook cli builds
+- [linux 64 bit](https://termbook.s3.amazonaws.com/termbook_linux64)
+- [linux 32 bit](https://termbook.s3.amazonaws.com/termbook_linux32)
+- [windows 64 bit](https://termbook.s3.amazonaws.com/termbook_window64.exe)
+- [windows 32 bit](https://termbook.s3.amazonaws.com/termbook_windows32.exe)
+- [apple intel](https://termbook.s3.amazonaws.com/termbook_appleintel)
+- [apple silicon](https://termbook.s3.amazonaws.com/termbook_applesilicon)
