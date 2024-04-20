@@ -15,6 +15,10 @@ type Entry struct {
 	Time      time.Time `json:"time"`
 }
 
+type Completed struct {
+	IsCompleted bool `json:"isCompleted"`
+}
+
 var dbConnection *sql.DB
 
 func Connect(path string) (*sql.DB, error) {
@@ -47,11 +51,50 @@ func newEntry(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUserEntries(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("hi user entries"))
+	email := r.PathValue("userEmail")
+	rows, err := dbConnection.Query("SELECT * FROM Entries WHERE userEmail=?", email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var entriesList []Entry
+	var entry Entry
+	for rows.Next() {
+		err := rows.Scan(&entry.UserEmail, &entry.Content, &entry.Time)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		entriesList = append(entriesList, entry)
+	}
+	jsonResult, err := json.Marshal(entriesList)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(jsonResult)
 }
 
 func timeCheck(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("time check"))
+	cutOff := time.Now().Add(-24 * time.Hour)
+	email := r.PathValue("userEmail")
+	rows, err := dbConnection.Query("SELECT * FROM Entries WHERE userEmail=? AND time > ? ", email, cutOff)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	jsonResult, err := json.Marshal(Completed{IsCompleted: rows.Next()})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(jsonResult)
 }
 
 func main() {
