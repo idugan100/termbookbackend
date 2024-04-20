@@ -11,6 +11,8 @@ import (
 	"os/signal"
 	"strings"
 	"time"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
 var Reset = "\033[0m"
@@ -22,8 +24,6 @@ var Purple = "\033[35m"
 var Cyan = "\033[36m"
 var Gray = "\033[37m"
 var White = "\033[97m"
-
-var st string = Red + "Hello" + Reset
 
 type Entry struct {
 	Content   string    `json:"content"`
@@ -46,7 +46,17 @@ func startupMessage(currentTime time.Time) {
 	month := currentTime.Month()
 	day := currentTime.Day()
 	year := currentTime.Year()
-	fmt.Printf("%sWelcome to your daily terminal journal!\nToday is %s %s %d, %d%s\n", Green, weekday, month, day, year, Reset)
+	var style = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#FAFAFA")).
+		Background(lipgloss.Color("#22D3EE")).
+		Padding(4, 4, 4, 4).
+		Width(100).
+		Border(lipgloss.ThickBorder(), true, true).
+		BorderForeground(lipgloss.Color("#2563EB")).
+		BorderStyle(lipgloss.RoundedBorder())
+	output := fmt.Sprintf("Welcome to your daily terminal journal!\nToday is %s %s %d, %d\n", weekday, month, day, year)
+	fmt.Println(style.Render(output))
 }
 
 func main() {
@@ -55,7 +65,7 @@ func main() {
 
 	currentTime := time.Now()
 	//Message for start of the program
-	
+
 	startupMessage(currentTime)
 
 	//get github username
@@ -82,7 +92,7 @@ func main() {
 	var content string
 	content = scanner.Text()
 
-	for len(strings.Split(content, " ")) < 5{
+	for len(strings.Split(content, " ")) < 5 {
 		fmt.Printf("%sNOT ENOUGH WORDS%s\nPlease write a journal entry - it must be at least 50 words\n", Red, Reset)
 		scanner.Scan()
 		content = scanner.Text()
