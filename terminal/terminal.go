@@ -74,7 +74,7 @@ func (mp progressModel) View() string {
 	pad := strings.Repeat(" ", padding)
 	return "\n" +
 		pad + mp.progress.View() + "\n\n" +
-		pad + helpStyle("Press any key to quit")
+		pad + "Loading Your Journal..."
 }
 
 func tickCmd() tea.Cmd {
@@ -92,9 +92,9 @@ type Styles struct{
 //Used for BubbleTea Wizard
 func DefaultStyles() *Styles {
 	s := new(Styles)
-	s.BorderColor = lipgloss.Color("#2563EB")
+	s.BorderColor = lipgloss.Color("#22D3EE")
 	s.BackColor = lipgloss.Color(Red)
-	s.InputField = lipgloss.NewStyle().BorderForeground(s.BorderColor).BorderStyle(lipgloss.RoundedBorder()).Padding(1).Width(80)
+	s.InputField = lipgloss.NewStyle().BorderForeground(s.BorderColor).BorderStyle(lipgloss.DoubleBorder()).Padding(1).Width(80)
 	return s
 }
 //Used for BubbleTea Wizard
@@ -221,7 +221,7 @@ func main() {
 	email := outBuffer.String()
 	email = email[:len(email)-1]
 	
-	checkRes, err := http.Get("http://127.0.0.1:8080/timecheck/" + email)
+	checkRes, err := http.Get("http://127.0.0.1:1234/timecheck/" + email)
 	var complete Completed
 	json.NewDecoder(checkRes.Body).Decode(&complete)
 	
@@ -232,10 +232,10 @@ func main() {
 	}
 */
 	mp := progressModel{
-		progress: progress.New(progress.WithDefaultGradient()),
+		progress: progress.New(progress.WithGradient("#22D3EE", "#2563EB")),
 	}
 
-	if _, err := tea.NewProgram(mp).Run(); err != nil {
+	if _, err := tea.NewProgram(mp, tea.WithAltScreen()).Run(); err != nil {
 		fmt.Println("Progress Bar goofed", err)
 		os.Exit(1)
 	}
@@ -273,8 +273,6 @@ func main() {
 		content = m2.response.output
 	}
 
-	fmt.Println("====================")
-
 	var entry Entry
 	entry.setEntry(content, email, currentTime)
 	jsonBytes, err := json.Marshal(entry)
@@ -282,16 +280,27 @@ func main() {
 		panic(err)
 	}
 	jsonString := string(jsonBytes)
-	res, err := http.Post("http://127.0.0.1:8080/newentry", "application/json", strings.NewReader(jsonString))
+	res, err := http.Post("http://127.0.0.1:1234/newentry", "application/json", strings.NewReader(jsonString))
 	if err != nil {
 		panic(err)
 	}
 	//fmt.Println(res.StatusCode)
-	if res.StatusCode == 201{
-		fmt.Println("Sucessful Journal Upload!")
-	} else {
-		fmt.Println("Failed to save to Journal Database!")
-	}
 
-	//fmt.Println(jsonString)
+	var style = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#FAFAFA")).
+		Background(lipgloss.Color("#22D3EE")).
+		Padding(2, 2, 2, 2).
+		Width(45).
+		Border(lipgloss.ThickBorder(), true, true).
+		BorderForeground(lipgloss.Color("#2563EB")).
+		BorderStyle(lipgloss.RoundedBorder())
+	var output string
+	if res.StatusCode == 201{
+		output = fmt.Sprintf("Sucessful Journal Upload!\n")
+	} else {
+		output = fmt.Sprintf("Failed to save to Journal Database!\n")
+		style.Background(lipgloss.Color("#FF0000"))
+	}
+	fmt.Println(style.Render(output))
 }
