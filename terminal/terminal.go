@@ -12,9 +12,9 @@ import (
 )
 
 type Entry struct {
-	Content   string 
-	UserEmail string
-	Time      time.Time
+	Content   string `json:"content"`
+	UserEmail string `json:"userEmail"`
+	Time      time.Time `json:"time"`
 }
 
 func (e *Entry) setEntry(content string, email string, time time.Time) {
