@@ -17,6 +17,12 @@ type Entry struct {
 	Time      time.Time
 }
 
+func (e *Entry) setEntry(content string, email string, time time.Time) {
+	e.Content = content
+	e.UserEmail = email
+	e.Time = time
+}
+
 func main() {
 
 	signal.Ignore(os.Interrupt)
@@ -25,13 +31,13 @@ func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
-	var entry string
-	entry = scanner.Text()
+	var content string
+	content = scanner.Text()
 
-	for len(strings.Split(entry, " ")) < 50 {
+	for len(strings.Split(content, " ")) < 5 {
 		fmt.Println("write a journal entry - it must be at least 50 words")
 		scanner.Scan()
-		entry = scanner.Text()
+		content = scanner.Text()
 	}
 
 	//get github username
@@ -46,7 +52,8 @@ func main() {
 
 	currentTime := time.Now()
 	fmt.Println("====================")
+
+	var entry Entry 
+	entry.setEntry(content, email, currentTime)
 	fmt.Println(entry)
-	fmt.Println(email)
-	fmt.Println(currentTime)
 }
