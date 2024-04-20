@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -50,15 +51,23 @@ func main() {
 		panic(err)
 	}
 	email := outBuffer.String()
+	email = email[:len(email)-1]
 
 	currentTime := time.Now()
 	fmt.Println("====================")
 
 	var entry Entry
 	entry.setEntry(content, email, currentTime)
-	jsonString, err := json.Marshal(entry)
+	jsonBytes, err := json.Marshal(entry)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(string(jsonString))
+	jsonString := string(jsonBytes)
+	res, err := http.Post("http://127.0.0.1:8080/newentry", "application/json", strings.NewReader(jsonString))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(res.StatusCode)
+
+	fmt.Println(jsonString)
 }
