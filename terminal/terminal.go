@@ -12,7 +12,7 @@ import (
 )
 
 type Entry struct {
-	Content   string
+	Content   string 
 	UserEmail string
 	Time      time.Time
 }
