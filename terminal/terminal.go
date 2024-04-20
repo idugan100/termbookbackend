@@ -225,12 +225,23 @@ func main() {
 	var complete Completed
 	json.NewDecoder(checkRes.Body).Decode(&complete)
 	
-/*
+	var style = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#FAFAFA")).
+		Background(lipgloss.Color("#22D3EE")).
+		Padding(2, 2, 2, 2).
+		Width(45).
+		Border(lipgloss.ThickBorder(), true, true).
+		BorderForeground(lipgloss.Color("#2563EB")).
+		BorderStyle(lipgloss.RoundedBorder())
+	var output string
+	
 	if complete.IsCompleted {
-		fmt.Printf("%sYou have already completed your journal for the day! Goodbye!%s\n", Green, Reset)
+		output = fmt.Sprintf("You have already completed your journal for the day! Goodbye!\n")
+		fmt.Println(style.Render(output))
 		return
 	}
-*/
+
 	mp := progressModel{
 		progress: progress.New(progress.WithGradient("#22D3EE", "#2563EB")),
 	}
@@ -258,9 +269,9 @@ func main() {
 	for len(strings.Split(content, " ")) < 5 {
 		var prompt2 string
 		if content == "99876-BAD"{
-			prompt2 = Red + "Nice try with CTRL+C, finish your entry!" + Reset + "\nPlease write a journal entry - it must be at least 50 words\n"
+			prompt2 = "\033[31m" + "Nice try with CTRL+C, finish your entry!" + "\033[0m" + "\nPlease write a journal entry - it must be at least 50 words\n"
 		} else {
-			prompt2 = Red + "NOT ENOUGH WORDS" + Reset + "\nPlease write a journal entry - it must be at least 50 words\n"
+			prompt2 = "\033[31m" + "NOT ENOUGH WORDS" + "\033[0m" + "\nPlease write a journal entry - it must be at least 50 words\n"
 		}
 		
 		response2 := NewResponse(prompt2)
@@ -286,16 +297,6 @@ func main() {
 	}
 	//fmt.Println(res.StatusCode)
 
-	var style = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#FAFAFA")).
-		Background(lipgloss.Color("#22D3EE")).
-		Padding(2, 2, 2, 2).
-		Width(45).
-		Border(lipgloss.ThickBorder(), true, true).
-		BorderForeground(lipgloss.Color("#2563EB")).
-		BorderStyle(lipgloss.RoundedBorder())
-	var output string
 	if res.StatusCode == 201{
 		output = fmt.Sprintf("Sucessful Journal Upload!\n")
 	} else {
