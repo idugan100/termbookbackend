@@ -2,10 +2,16 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
+	"net/http"
 
 	_ "modernc.org/sqlite"
 )
+
+type Entry struct {
+	Content   string `json:"content"`
+	UserEmail string `json:"userEmail"`
+	Time      string `json:"time"`
+}
 
 func Connect(path string) (*sql.DB, error) {
 	conn, err := sql.Open("sqlite", ("file:" + path))
@@ -15,12 +21,35 @@ func Connect(path string) (*sql.DB, error) {
 	return conn, nil
 }
 
+func newEntry(w http.ResponseWriter, r *http.Request) {
+
+	w.Write([]byte("hi create"))
+}
+
+func getUserEntries(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("hi user entries"))
+}
+
+func timeCheck(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("time check"))
+}
+
 func main() {
 	dbConnection, err := Connect("./database.db")
 	if err != nil {
 		panic(err)
 	}
 	dbConnection.Ping()
-	fmt.Println("hello server")
 
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /newentry", newEntry)
+	mux.HandleFunc("GET /entries/{userEmail}", getUserEntries)
+	mux.HandleFunc("GET /timecheck/{userEmail}", timeCheck)
+
+	s := http.Server{
+		Addr:    ":8080",
+		Handler: mux,
+	}
+
+	panic(s.ListenAndServe())
 }

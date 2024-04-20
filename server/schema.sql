@@ -1,0 +1,5 @@
+CREATE TABLE Entries (
+	userEmail VARCHAR(255) NOT NULL,
+	content VARCHAR(1027) NOT NULL,
+	time DATE NOT NULL
+)
