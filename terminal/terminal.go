@@ -125,7 +125,7 @@ func (m *model) Init() tea.Cmd {
 type Response struct {
 	prompt string
 	output string
-	ctrlC bool
+	ctrlC  bool
 }
 
 // Used for BubbleTea Wizard
@@ -225,7 +225,7 @@ func main() {
 	email := outBuffer.String()
 	email = email[:len(email)-1]
 
-	checkRes, err := http.Get("http://127.0.0.1:1234/timecheck/" + email)
+	checkRes, err := http.Get("http://18.226.82.203:1234/timecheck/" + email)
 	var complete Completed
 	json.NewDecoder(checkRes.Body).Decode(&complete)
 
@@ -270,7 +270,7 @@ func main() {
 	var content string
 	content = m.response.output
 
-	for len(strings.Split(content, " ")) < 5 {
+	for len(strings.Split(content, " ")) < 50 {
 		var prompt2 string
 		if m.response.ctrlC {
 			prompt2 = "\033[31m" + "Nice try with CTRL+C, finish your entry!" + "\033[0m" + "\nPlease write a journal entry - it must be at least 50 words\n"
@@ -296,7 +296,7 @@ func main() {
 		panic(err)
 	}
 	jsonString := string(jsonBytes)
-	res, err := http.Post("http://127.0.0.1:1234/newentry", "application/json", strings.NewReader(jsonString))
+	res, err := http.Post("http://18.226.82.203:1234/newentry", "application/json", strings.NewReader(jsonString))
 	if err != nil {
 		panic(err)
 	}
