@@ -19,7 +19,7 @@ func newEntry(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing field", http.StatusBadRequest)
 		return
 	}
-	_, err = dbConnection.Exec("INSERT INTO Entries (userEmail, content, time) VALUES (?,?,?)", e.UserEmail, e.Content, e.Time)
+	_, err = dbConnection.Exec("INSERT INTO Entries (userEmail, content, time) VALUES (?,?,?)", e.UserEmail, e.Content, e.Time.Format("2006-01-02 15:04:05"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
