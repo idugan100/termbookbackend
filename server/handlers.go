@@ -31,7 +31,7 @@ func newEntry(w http.ResponseWriter, r *http.Request) {
 
 func getUserEntries(w http.ResponseWriter, r *http.Request) {
 	email := r.PathValue("userEmail")
-	rows, err := dbConnection.Query("SELECT * FROM Entries WHERE userEmail=?", email)
+	rows, err := dbConnection.Query("SELECT * FROM Entries WHERE userEmail=? ORDER BY time DESC", email)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
