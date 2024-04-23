@@ -302,7 +302,7 @@ func main() {
 	}
 
 	if res.StatusCode == 201 {
-		output = fmt.Sprintf("Sucessful Journal Upload!\n")
+		output = fmt.Sprintf("Successful Journal Upload!\n")
 	} else {
 		output = fmt.Sprintf("Failed to save to Journal Database!\n")
 		style.Background(lipgloss.Color("#FF0000"))
