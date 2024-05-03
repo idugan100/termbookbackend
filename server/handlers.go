@@ -30,6 +30,10 @@ func newEntry(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUserEntries(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Authorization") != password {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
 	email := r.PathValue("userEmail")
 	rows, err := dbConnection.Query("SELECT * FROM Entries WHERE userEmail=? ORDER BY time DESC", email)
 	if err != nil {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/idugan100/env"
 	_ "modernc.org/sqlite"
 )
 
@@ -19,8 +20,13 @@ type Completed struct {
 }
 
 var dbConnection *sql.DB
+var password string
 
 func main() {
+	//pasre env here and store
+	e := env.NewEnv()
+	e.ParseEnv()
+	password = e.GetEnvValue("API_SECRET")
 	var err error
 	dbConnection, err = Connect("./database.db")
 	if err != nil {
